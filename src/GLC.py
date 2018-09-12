@@ -39,8 +39,8 @@ class  GeneradorCongruencialLineal(object) :
 	
 	def _generate_n_uniform_random_numbers(self,seed,n,number_list):
 		for x in range(0,n):
-			new_number= ((self.multiplier*seed+self.increment)%self.module)/self.module
-			number_list.append(new_number)
+			new_number= self.generate_random(seed)
+			number_list.append(new_number/self.module)
 			seed=new_number
 		return number_list
 

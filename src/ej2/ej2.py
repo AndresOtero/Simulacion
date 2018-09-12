@@ -10,14 +10,10 @@ media=15
 list_exp=[ log(1-x)/(-1/media) for x in l_random_numbers]
 x_range=[]
 n,bins,batches=Histogram.plot_without_range(list_exp,100,"numero","frecuencia","100.000 numeros al azar","./ej2.png")
-print ("Histograma 1  ")
-for x in range(len(n)):
-	if(n[x]>=1):
-		print ("cantidad de ocurrencias: "+str(n[x])+" rango:"+str(bins[x]))
-x_range=[0.006,0.008]
-Histogram.plot(list_exp,100,x_range,"numero","frecuencia","100.000 numeros al azar","./ej2Zoom.png")
-x_range=[0.00760,0.00762]
-Histogram.plot(list_exp,100,x_range,"numero","frecuencia","100.000 numeros al azar","./ej2ZoomPlus.png")
+# print ("Histograma 1  ")
+# for x in range(len(n)):
+# 	if(n[x]>=1):
+# 		print ("cantidad de ocurrencias: "+str(n[x])+" rango:"+str(bins[x]))
 staticalHelper=StaticalHelper() 
 mean=staticalHelper.mean(list_exp)
 var= staticalHelper.variance(list_exp)
