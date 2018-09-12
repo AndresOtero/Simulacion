@@ -5,14 +5,18 @@ from Histogram import Histogram
 from numpy import log
 from StaticalHelper import StaticalHelper
 import math
+def box_muller(pair):
+	z1 = math.sqrt(-2 * math.log(pair[0])) * math.cos(2 * math.pi * pair[1])
+	z2 = math.sqrt(-2 * math.log(pair[0])) * math.sin(2 * math.pi * pair[1])
+	return (z1,z2)       
 
 media=0
 varianza=1
 glc = GeneradorCongruencialLineal()
 l_random_numbers= glc.generate_n_uniform_random_numbers_padron(100000)
-l_pair_random_numbers= [ (l_random_numbers[i],l_random_numbers[i]+len(l_random_numbers)/2) for i in range(len(l_random_numbers)/2)]
-l_pair_random_numbers_gauss=[ box_muller(pair) for pair in l_pair_random_numbers]
-l_random_numbers_gauss=[number  for pair in l_pair_random_numbers_gauss for x in pair]
+l_pair_random_numbers= [ (l_random_numbers[i],l_random_numbers[i+50000]) for i in range(50000)] #make pairs of random numbers
+l_pair_random_numbers_gauss=[ box_muller(pair) for pair in l_pair_random_numbers] #transform into gaussian variable
+l_random_numbers_gauss=[number  for pair in l_pair_random_numbers_gauss for number in pair]#flat tuple list
 n,bins,batches=Histogram.plot_without_range(l_random_numbers_gauss,100,"numero","frecuencia","100.000 numeros al azar","./ej3.png")
 staticalHelper=StaticalHelper() 
 mean=staticalHelper.mean(l_random_numbers_gauss)
@@ -33,7 +37,3 @@ print ("Moda teorica:")
 print (media)
 
 
-def box_muller(pair):
-	z1 = math.sqrt(-2 * math.log(pair[0])) * math.cos(2 * math.pi * pair[1])
-	z2 = math.sqrt(-2 * math.log(pair[0])) * math.sin(2 * math.pi * pair[1])
-	return (z1,z2)       
