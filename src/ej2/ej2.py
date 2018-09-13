@@ -2,13 +2,15 @@ import sys
 sys.path.append('../')
 from GLC import GeneradorCongruencialLineal
 from Histogram import Histogram
-from numpy import log
 from StaticalHelper import StaticalHelper
-glc = GeneradorCongruencialLineal()
-l_random_numbers= glc.generate_n_uniform_random_numbers_padron(100000)
+
+
+
 media=15
-list_exp=[ log(1-x)/(-1/media) for x in l_random_numbers]
-x_range=[]
+n=100000
+glc = GeneradorCongruencialLineal()
+
+list_exp=glc.generate_n_exp_random_numbers_padron(n,media)
 n,bins,batches=Histogram.plot_without_range(list_exp,100,"numero","frecuencia","100.000 numeros al azar","./ej2.png")
 # print ("Histograma 1  ")
 # for x in range(len(n)):
@@ -31,3 +33,5 @@ print ("Moda de la muestra: ")
 print (mode)
 print ("Moda teorica:")
 print (0)
+
+
