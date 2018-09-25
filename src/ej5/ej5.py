@@ -20,3 +20,4 @@ l_random_numbers= glc.generate_n_uniform_random_numbers_padron(100000)
 l_custom_distribution_numbers=[ getValueBack(number) for number in l_random_numbers]
 hist_bins= [i+0.5 for i in range(0,5)]
 n,bins,batches=Histogram.plot_without_range(l_custom_distribution_numbers,hist_bins,"numero","frecuencia","100.000 numeros al azar","./ej5.png")
+print (n)
