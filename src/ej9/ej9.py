@@ -19,7 +19,7 @@ def test_gap(glc,a,b,size):
         esperados = (b - a) * size
         print ("Valores esperados dentro del gap: ", esperados)
         print ("Valores obtenidos dentro del gap: ", valores_dentro_gap)
-        porcentaje = "{:.1%}".format((esperados/valores_dentro_gap)-1)
+        porcentaje = "{:.1%}".format(1-(esperados/valores_dentro_gap))
         print ("Porcentaje de significación: ", porcentaje)
     else:
         print ("Parámetros inválidos")
