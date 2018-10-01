@@ -44,6 +44,16 @@ def EJ3():
   
     except StatisticsError:
         print("MODA:" + "0")
-  
-        
+#--------------------------------------------------------------------------------------------
+    #Comparacion distribucion normal brindada por python VS. distribucion obtenida   
+    y1 = np.random.normal(-2,2,100000)
+    
+    colors = ['b','g']
+    fig, ax1 = plt.subplots()
+    ax1.hist([y1,listainterp],color=colors)
+    ax1.set_xlim(-10,10)
+    plt.tight_layout()
+    plt.title("Histograma")
+    plt.show()
+       
 EJ3()
