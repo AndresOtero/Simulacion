@@ -25,6 +25,6 @@ def test_gap(glc,a,b,size):
         print ("Parámetros inválidos")
 
 glc = GeneradorCongruencialLineal()
-test_gap(glc,0.5,1,2000)
+test_gap(glc,0.5,1,10000)
 
-test_gap(glc,0.2,0.6,2000)
+test_gap(glc,0.2,0.6,10000)
