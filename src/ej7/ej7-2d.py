@@ -1,3 +1,5 @@
+import sys
+sys.path.append('../')
 from mpl_toolkits.mplot3d import Axes3D
 from GLC import GeneradorCongruencialLineal
 import matplotlib.pyplot as plt
@@ -22,5 +24,6 @@ ax.scatter(x, y, c='r', marker='o')
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 
+plt.title("Test Espectral 2D")
 plt.savefig("./ej7-2d.png")
 plt.show()

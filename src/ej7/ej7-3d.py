@@ -27,5 +27,6 @@ ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 
+plt.title("Test Espectral 3D")
 plt.savefig("./ej7-3d.png")
 plt.show()
