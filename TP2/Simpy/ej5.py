@@ -3,6 +3,9 @@ import random
 import simpy
 
 EXPONENTIAL_MEAN=45
+NUMBER_OF_SERVERS=5
+NUMBER_OF_REQUESTS=100000
+
 
 class Sender(object):
     maxQueueLength=0
@@ -14,26 +17,39 @@ class Sender(object):
         self.numberOfRequests=numberOfRequests
 
     def startSendingRequests(self):
-        for x in range(numberOfRequests):
-            req = Request(self.env,self.atm)
-            env.process(c.useATM())
-            t = random.expovariate(1.0 / self.exponentialMean)
-            queueLength=len(self.atm.queue)
-            print("Queue length %s"%queueLength)
+        for x in range(self.numberOfRequests):
+        	t = random.expovariate(1.0 / self.exponentialMean)
+        	yield env.timeout(t)
+        	req = Request(self.env)
+        	server = self.loadBalancer.get()
+        	self.env.process(server.sendRequest(req))
 
-            if(Source.maxQueueLength<queueLength):
-                Source.timeMaxQueueLength.clear()
-                Source.maxQueueLength=queueLength
 
-            if(Source.maxQueueLength==queueLength):
-                Source.timeMaxQueueLength.append(env.now)
+class Server(object):
+	serverNumber=0
+	def __init__(self,env):
+		self.env=env
+		self.srvNr =Server.serverNumber
+		Server.serverNumber+=1
+		self.server= simpy.Resource(env, capacity=1)
 
-            yield env.timeout(t)
+        #self.startWaiting=env.no
+	def sendRequest(self,request):
+		arrive = self.env.now
+		#print('Server Nro %s ,Request Nro %s arrived at time : %s' % (str(self.srvNr), str(request.custNr),str(env.now)))
+		with self.server.request() as req:
+			yield req
+			serverReceived=self.env.now
+			yield env.timeout(request.processTime)
+			print('Server Nro %s ,Request Nro %s arrived, Process time : %s  ,Waiting time : %s' % (str(self.srvNr), str(request.custNr),str(self.env.now-serverReceived),str(serverReceived-arrive)))
+			#print('Server Nro %s, Queue Length: %s' % (str(self.srvNr), len(self.server.queue)))
 
+	def getQueueLen(self):
+		return len(self.server.queue)
 
 class Request(object):
     
-    requestNumber=0.0
+    requestNumber=0
     maxWaitingTime=0.0
     clientTypemaxWaitingTime=0
     timeMaxWaitingTime=0
@@ -42,8 +58,9 @@ class Request(object):
         customerType,processTime =self.generateCustomerType()
         self.customerType=customerType
         self.processTime=processTime
-        Customer.customerNumber+=1
-        self.custNr =Customer.customerNumber
+        self.custNr =Request.requestNumber
+        Request.requestNumber+=1
+        #print('Request Nro %s ' % (str(self.custNr)))
         #self.startWaiting=env.now
 
     def generateCustomerType(self):
@@ -57,9 +74,29 @@ class Request(object):
         processTime= (500 +random.uniform(-300,300))
         return "C",processTime
 
-	def sendRequest(self,server):
-		with self.atm.request() as req:
-            yield req 
-            yield env.timeout(self.processTime)
-            
-		
+class  LoadBalancer(object):
+	"""docstring for  loadBalancer"""
+	def __init__(self, numberOfServers):
+		self.store= simpy.FilterStore(env, capacity=numberOfServers)
+		self.servers=[]
+
+	def put(self,server):
+		self.servers.append(server)
+
+	def get(self):
+		self.servers.sort(key=lambda server: server.srvNr)
+		self.servers.sort(key=lambda server: server.getQueueLen())
+		#print([("Server "+str(server.srvNr),server.getQueueLen()) for server in self.servers])
+		#print ("Elijo "+ str( self.servers[0].srvNr))
+		return self.servers[0]
+
+random.seed(42)
+env = simpy.Environment()
+loadBalancer = LoadBalancer(NUMBER_OF_SERVERS)
+for i in range(NUMBER_OF_SERVERS):
+	server=Server(env)
+	loadBalancer.put(server)
+
+sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,NUMBER_OF_REQUESTS)
+env.process(sender.startSendingRequests())
+env.run()
