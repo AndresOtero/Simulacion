@@ -1,10 +1,14 @@
 import random
 
+import sys
+
 import simpy
+
+import itertools
 
 EXPONENTIAL_MEAN=45
 NUMBER_OF_SERVERS=5
-NUMBER_OF_REQUESTS=100000
+NUMBER_OF_REQUESTS=10000
 
 
 class Sender(object):
@@ -23,7 +27,7 @@ class Sender(object):
         	req = Request(self.env)
         	server = self.loadBalancer.get()
         	self.env.process(server.sendRequest(req))
-
+        print("Finalizo:"+str(self.env.now))
 
 class Server(object):
 	serverNumber=0
@@ -41,7 +45,7 @@ class Server(object):
 			yield req
 			serverReceived=self.env.now
 			yield env.timeout(request.processTime)
-			print('Server Nro %s ,Request Nro %s arrived, Process time : %s  ,Waiting time : %s' % (str(self.srvNr), str(request.custNr),str(self.env.now-serverReceived),str(serverReceived-arrive)))
+			#print('Server Nro %s ,Request Nro %s arrived, Process time : %s  ,Waiting time : %s' % (str(self.srvNr), str(request.custNr),str(self.env.now-serverReceived),str(serverReceived-arrive)))
 			#print('Server Nro %s, Queue Length: %s' % (str(self.srvNr), len(self.server.queue)))
 
 	def getQueueLen(self):
@@ -76,26 +80,40 @@ class Request(object):
 
 class  LoadBalancer(object):
 	"""docstring for  loadBalancer"""
-	def __init__(self, numberOfServers):
+	def __init__(self, numberOfServers,loadBalancerType):
 		self.store= simpy.FilterStore(env, capacity=numberOfServers)
 		self.servers=[]
+		self.loadBalancerType=loadBalancerType
+		self.cycleIter=itertools.cycle(self.servers)
 
 	def put(self,server):
 		self.servers.append(server)
+		self.cycleIter=itertools.cycle(self.servers)
 
 	def get(self):
-		self.servers.sort(key=lambda server: server.srvNr)
-		self.servers.sort(key=lambda server: server.getQueueLen())
-		#print([("Server "+str(server.srvNr),server.getQueueLen()) for server in self.servers])
-		#print ("Elijo "+ str( self.servers[0].srvNr))
-		return self.servers[0]
+		if(self.loadBalancerType=="0"):
+			self.servers.sort(key=lambda server: server.srvNr)
+			self.servers.sort(key=lambda server: server.getQueueLen())
+			#print([("Server "+str(server.srvNr),server.getQueueLen()) for server in self.servers])
+			#print ("Elijo "+ str( self.servers[0].srvNr))
+			choosenServer= self.servers[0]
+			print (choosenServer.srvNr)
+			return choosenServer
+		else:
+			choosenServer= next(self.cycleIter)
+			print (choosenServer.srvNr)
+			return choosenServer
+
 
 random.seed(42)
 env = simpy.Environment()
-loadBalancer = LoadBalancer(NUMBER_OF_SERVERS)
+loadBalancerType=sys.argv[1]
+loadBalancer = LoadBalancer(NUMBER_OF_SERVERS,loadBalancerType)
 for i in range(NUMBER_OF_SERVERS):
 	server=Server(env)
 	loadBalancer.put(server)
+
+
 
 sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,NUMBER_OF_REQUESTS)
 env.process(sender.startSendingRequests())
