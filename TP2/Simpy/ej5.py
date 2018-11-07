@@ -8,7 +8,7 @@ import itertools
 
 EXPONENTIAL_MEAN=45
 NUMBER_OF_SERVERS=5
-NUMBER_OF_REQUESTS=50000
+NUMBER_OF_REQUESTS=5000
 
 
 class Sender(object):
@@ -27,7 +27,6 @@ class Sender(object):
         	req = Request(self.env)
         	server = self.loadBalancer.get()
         	self.env.process(server.sendRequest(req))
-        print("Finalizo:"+str(self.env.now))
 
 class Server(object):
 	serverNumber=0
@@ -118,3 +117,4 @@ for i in range(NUMBER_OF_SERVERS):
 sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,NUMBER_OF_REQUESTS)
 env.process(sender.startSendingRequests())
 env.run()
+print("Finalizo:"+str(env.now))
