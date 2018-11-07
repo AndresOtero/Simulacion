@@ -8,7 +8,7 @@ import itertools
 
 EXPONENTIAL_MEAN=45
 NUMBER_OF_SERVERS=5
-NUMBER_OF_REQUESTS=5000
+NUMBER_OF_REQUESTS=1000
 
 
 class Sender(object):
@@ -35,7 +35,7 @@ class Server(object):
 		self.srvNr =Server.serverNumber
 		Server.serverNumber+=1
 		self.server= simpy.Resource(env, capacity=1)
-
+		self.requestsServed=[]
         #self.startWaiting=env.no
 	def sendRequest(self,request):
 		arrive = self.env.now
@@ -44,8 +44,9 @@ class Server(object):
 			yield req
 			serverReceived=self.env.now
 			yield env.timeout(request.processTime)
-			#print('Server Nro %s ,Request Nro %s arrived, Process time : %s  ,Waiting time : %s' % (str(self.srvNr), str(request.custNr),str(self.env.now-serverReceived),str(serverReceived-arrive)))
+			print('Server Nro %s ,Request Nro %s , type %s ,arrived at %s ,left at %s, Process time : %s  ,Waiting time : %s , queue len: %s' % (str(self.srvNr), str(request.custNr),str(request.customerType),str(arrive),str(env.now),str(self.env.now-serverReceived),str(serverReceived-arrive),str(self.getQueueLen())))
 			#print('Server Nro %s, Queue Length: %s' % (str(self.srvNr), len(self.server.queue)))
+			self.requestsServed.append((str(self.srvNr), str(request.custNr),str(request.customerType),str(arrive),str(env.now),str(self.env.now-serverReceived),str(serverReceived-arrive),str(self.getQueueLen())))
 
 	def getQueueLen(self):
 		return len(self.server.queue)
@@ -63,7 +64,7 @@ class Request(object):
         self.processTime=processTime
         self.custNr =Request.requestNumber
         Request.requestNumber+=1
-        #print('Request Nro %s ' % (str(self.custNr)))
+        #print('Request Nro %s, type %s ' % (str(self.custNr),str(self.customerType)))
         #self.startWaiting=env.now
 
     def generateCustomerType(self):
@@ -96,17 +97,18 @@ class  LoadBalancer(object):
 			#print([("Server "+str(server.srvNr),server.getQueueLen()) for server in self.servers])
 			#print ("Elijo "+ str( self.servers[0].srvNr))
 			choosenServer= self.servers[0]
-			print ("El load balancer tipo 0 eligio "+str(choosenServer.srvNr)+ " con carga "+str(choosenServer.getQueueLen()))
+			#print ("El load balancer tipo 0 eligio el servidor "+str(choosenServer.srvNr)+ " con carga "+str(choosenServer.getQueueLen()))
 			return choosenServer
 		else:
 			choosenServer= next(self.cycleIter)
-			print ("El load balancer tipo 1 eligio "+str(choosenServer.srvNr)+ " con carga "+str(choosenServer.getQueueLen()))
+			#print ("El load balancer tipo 1 eligio el servidor "+str(choosenServer.srvNr)+ " con carga "+str(choosenServer.getQueueLen()))
 			return choosenServer
 
 
 random.seed(42)
 env = simpy.Environment()
 loadBalancerType=sys.argv[1]
+numberOfRequests	=  int(sys.argv[2]) if (len(sys.argv)>2)  else NUMBER_OF_REQUESTS
 loadBalancer = LoadBalancer(NUMBER_OF_SERVERS,loadBalancerType)
 for i in range(NUMBER_OF_SERVERS):
 	server=Server(env)
@@ -114,7 +116,9 @@ for i in range(NUMBER_OF_SERVERS):
 
 
 
-sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,NUMBER_OF_REQUESTS)
+sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,numberOfRequests)
 env.process(sender.startSendingRequests())
 env.run()
 print("Finalizo:"+str(env.now))
+for server in loadBalancer.servers:
+	print("El server %s contesto %s requests" % ((server.srvNr,str(len(server.requestsServed)))))
