@@ -8,7 +8,7 @@ import itertools
 
 EXPONENTIAL_MEAN=45
 NUMBER_OF_SERVERS=5
-NUMBER_OF_REQUESTS=1000
+NUMBER_OF_REQUESTS=50000
 
 
 class Sender(object):
@@ -97,11 +97,11 @@ class  LoadBalancer(object):
 			#print([("Server "+str(server.srvNr),server.getQueueLen()) for server in self.servers])
 			#print ("Elijo "+ str( self.servers[0].srvNr))
 			choosenServer= self.servers[0]
-			print ("El load balancer tipo 0 eligio"+str(choosenServer.srvNr)+ " con carga"+str(choosenServer.getQueueLen()))
+			print ("El load balancer tipo 0 eligio "+str(choosenServer.srvNr)+ " con carga "+str(choosenServer.getQueueLen()))
 			return choosenServer
 		else:
 			choosenServer= next(self.cycleIter)
-			print ("El load balancer tipo 1 eligio"+str(choosenServer.srvNr)+ " con carga"+str(choosenServer.getQueueLen()))
+			print ("El load balancer tipo 1 eligio "+str(choosenServer.srvNr)+ " con carga "+str(choosenServer.getQueueLen()))
 			return choosenServer
 
 

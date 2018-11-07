@@ -4,9 +4,9 @@ import simpy
 
 
 RANDOM_SEED = 42
-EXPONENTIAL_MEAN = 45 
+#EXPONENTIAL_MEAN = 45 
 SECONDS_PER_HOUR=3600
-
+EXPONENTIAL_MEAN_SOURCE_TIME_TUPLE_LIST=[(240,2),(120,5),(360,9)]
 class Source(object):
     maxQueueLength=0
     timeMaxQueueLength=[]
@@ -20,20 +20,12 @@ class Source(object):
             c = Customer(self.env,self.atm)
             env.process(c.useATM())
             t = random.expovariate(1.0 / self.exponentialMean)
-            queueLength=len(self.atm.queue)
-            print("Queue length %s"%queueLength)
-
-            if(Source.maxQueueLength<queueLength):
-                Source.timeMaxQueueLength.clear()
-                Source.maxQueueLength=queueLength
-
-            if(Source.maxQueueLength==queueLength):
-                Source.timeMaxQueueLength.append(env.now)
 
             yield env.timeout(t)
 
 class Customer(object):
-    
+    maxQueueLength=0
+    timeMaxQueueLength=[]
     customerNumber=0.0
     maxWaitingTime=0.0
     clientTypemaxWaitingTime=0
@@ -63,14 +55,25 @@ class Customer(object):
     def useATM(self):
         """Customer arrives, is served and leaves."""
         arrive = env.now
-        print('%7.4f Cliente Nro %s arrived, type: %s' % (arrive, str(Customer.customerNumber),str(self.customerType)))
+        cstNumber=Customer.customerNumber
+        print('%7.4f Cliente Nro %s arrived, type: %s' % (arrive, str(cstNumber),str(self.customerType)))
+        queueLength=len(self.atm.queue)
+        print("Queue length %s"%queueLength)
+
+        if(Customer.maxQueueLength<queueLength):
+            Customer.timeMaxQueueLength.clear()
+            Customer.maxQueueLength=queueLength
+
+        if(Customer.maxQueueLength==queueLength):
+            Customer.timeMaxQueueLength.append(env.now)
 
         with self.atm.request() as req:
             yield req 
+
             waitingTime=env.now-arrive
             yield env.timeout(self.processTime)
-            print('Cliente Nro %s arrived, Process time : %s' % ( str(Customer.customerNumber),str(env.now-arrive)))
-            print('Cliente Nro %s arrived, Waiting time : %s' % ( str(Customer.customerNumber),str(waitingTime)))
+            print('Cliente Nro %s arrived, Process time : %s' % ( str(cstNumber),str(env.now-arrive)))
+            print('Cliente Nro %s arrived, Waiting time : %s' % ( str(cstNumber),str(waitingTime)))
             if Customer.maxWaitingTime<waitingTime :
                 Customer.maxWaitingTime=waitingTime
                 Customer.clientTypemaxWaitingTime=self.customerType
@@ -89,5 +92,6 @@ for exponentialMean,sourceTime in EXPONENTIAL_MEAN_SOURCE_TIME_TUPLE_LIST:
     source=Source(env, exponentialMean, atm)
     env.process(source.startServingCustomers())
     env.run(until=sourceTime*SECONDS_PER_HOUR)
-print("Max queue length: %s , times it happend: %s"%(Source.maxQueueLength,str(Source.timeMaxQueueLength)))
+    print("Termino Proceso")
+print("Max queue length: %s , times it happend: %s"%(Customer.maxQueueLength,str(Customer.timeMaxQueueLength)))
 print("Max waiting time: %s , type of customer: %s ,time it happend: %s"%(Customer.maxWaitingTime,Customer.clientTypemaxWaitingTime,str(Customer.timeMaxWaitingTime)))
