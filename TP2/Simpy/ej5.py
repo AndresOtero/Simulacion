@@ -3,12 +3,12 @@ import random
 import sys
 
 import simpy
+import matplotlib.pyplot as plt
 
 import itertools
 
 EXPONENTIAL_MEAN=45
 NUMBER_OF_SERVERS=5
-NUMBER_OF_REQUESTS=1000
 
 
 class Sender(object):
@@ -44,7 +44,7 @@ class Server(object):
 			yield req
 			serverReceived=self.env.now
 			yield env.timeout(request.processTime)
-			print('Server Nro %s ,Request Nro %s , type %s ,arrived at %s ,left at %s, Process time : %s  ,Waiting time : %s , queue len: %s' % (str(self.srvNr), str(request.custNr),str(request.customerType),str(arrive),str(env.now),str(self.env.now-serverReceived),str(serverReceived-arrive),str(self.getQueueLen())))
+			#print('Server Nro %s ,Request Nro %s , type %s ,arrived at %s ,left at %s, Process time : %s  ,Waiting time : %s , queue len: %s' % (str(self.srvNr), str(request.custNr),str(request.customerType),str(arrive),str(env.now),str(self.env.now-serverReceived),str(serverReceived-arrive),str(self.getQueueLen())))
 			#print('Server Nro %s, Queue Length: %s' % (str(self.srvNr), len(self.server.queue)))
 			self.requestsServed.append((str(self.srvNr), str(request.custNr),str(request.customerType),str(arrive),str(env.now),str(self.env.now-serverReceived),str(serverReceived-arrive),str(self.getQueueLen())))
 
@@ -79,8 +79,7 @@ class Request(object):
         return "C",processTime
 
 class  LoadBalancer(object):
-	"""docstring for  loadBalancer"""
-	def __init__(self, numberOfServers,loadBalancerType):
+	def __init__(self, env,numberOfServers,loadBalancerType):
 		self.store= simpy.FilterStore(env, capacity=numberOfServers)
 		self.servers=[]
 		self.loadBalancerType=loadBalancerType
@@ -105,20 +104,38 @@ class  LoadBalancer(object):
 			return choosenServer
 
 
-random.seed(42)
-env = simpy.Environment()
-loadBalancerType=sys.argv[1]
-numberOfRequests	=  int(sys.argv[2]) if (len(sys.argv)>2)  else NUMBER_OF_REQUESTS
-loadBalancer = LoadBalancer(NUMBER_OF_SERVERS,loadBalancerType)
-for i in range(NUMBER_OF_SERVERS):
-	server=Server(env)
-	loadBalancer.put(server)
+def runSimulation(env,loadBalancerType,numberOfRequests):
+	random.seed(42)
+	loadBalancer = LoadBalancer(env,NUMBER_OF_SERVERS,loadBalancerType)
+	for i in range(NUMBER_OF_SERVERS):
+		server=Server(env)
+		loadBalancer.put(server)
+	sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,numberOfRequests)
+	env.process(sender.startSendingRequests())
+	env.run()
+	return env.now
 
+diccTimes={}
+for loadBalancerType in ["0","1"]:
+	diccTimes[loadBalancerType]=[]
+	for requestNumber in range(1,6):
+		for x in range(1,5):
+			reqNumber=int(x*2.5*(10**requestNumber))
+			env = simpy.Environment()
+			time=runSimulation(env,loadBalancerType,reqNumber)
+			print(loadBalancerType,reqNumber,time)
+			diccTimes[loadBalancerType].append(time)
 
-
-sender=Sender(env,EXPONENTIAL_MEAN,loadBalancer,numberOfRequests)
-env.process(sender.startSendingRequests())
-env.run()
-print("Finalizo:"+str(env.now))
-for server in loadBalancer.servers:
-	print("El server %s contesto %s requests" % ((server.srvNr,str(len(server.requestsServed)))))
+requestsTimes=[x*2.5*(10**requestNumber)  for requestNumber in range(1, 6) for x in range(1,5) ]
+print(diccTimes)
+difference=[ diccTimes["0"][x] - diccTimes["1"][x] for x in range(len(diccTimes["0"]))]
+print(requestsTimes)
+fig = plt.figure()
+ax = plt.gca()
+ax.set_yscale('log')
+ax.set_xscale('log')
+#ax.set_yscale('log')
+print(difference)
+plt.scatter(requestsTimes, difference)
+#plt.scatter(requestsTimes, loadBalancerType1, label='1')
+plt.show()
